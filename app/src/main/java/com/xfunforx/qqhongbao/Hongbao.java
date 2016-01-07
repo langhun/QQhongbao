@@ -2,6 +2,7 @@ package com.xfunforx.qqhongbao;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -35,8 +36,12 @@ public class Hongbao implements IXposedHookLoadPackage {
         XposedBridge.log("[" + tag + "]" + log.toString());
         ;
     }
+    private boolean toggle(XC_LoadPackage.LoadPackageParam loadPackageParam){
+        SharedPreferences sp =(SharedPreferences) XposedHelpers.callStaticMethod(XposedHelpers.findClass("com.tencent.mobileqq.msf.sdk.SettingCloneUtil",loadPackageParam.classLoader),"getSharedPreferences");
+        return sp.getBoolean("qqsetting_notify_showcontent_key",true);
+    }
 
-    private void dohook(XC_LoadPackage.LoadPackageParam loadPackageParam){
+    private void dohook(final XC_LoadPackage.LoadPackageParam loadPackageParam){
 
         XposedHelpers.findAndHookMethod("com.tencent.mobileqq.app.MessageHandlerUtils", loadPackageParam.classLoader, "a",
                 "com.tencent.mobileqq.app.QQAppInterface",
@@ -151,9 +156,12 @@ public class Hongbao implements IXposedHookLoadPackage {
                                 if (globalcontext == null) {
                                     log("hongbao debug", "the context is null");
                                 } else {
-                                    ;
-                                    log("hongbao debug", "the start the activity");
-                                    globalcontext.startActivity(intent);
+                                    if(toggle(loadPackageParam)) {
+                                        log("hongbao debug", "the start the activity");
+                                        globalcontext.startActivity(intent);
+                                    }else{
+                                        log("hongbao debug","the toggle is off");
+                                    }
                                 }
                             }
                         }
